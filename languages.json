@@ -1,0 +1,32 @@
+{
+    "0": [
+        "Arabic",
+        "ar",
+        "ara",
+        "arab"
+    ],
+    "1": [
+        "English",
+        "en",
+        "eng",
+        "anglais"
+    ],
+    "2": [
+        "French",
+        "fr",
+        "fre",
+        "fran\u00e7ais"
+    ],
+    "3": [
+        "Spanish",
+        "es",
+        "spa",
+        "espagnol"
+    ],
+    "4": [
+        "German",
+        "de",
+        "ger",
+        "allemand"
+    ]
+}
