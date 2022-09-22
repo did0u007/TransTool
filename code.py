@@ -1,5 +1,6 @@
 import json
 import os
+from mtranslate import translate
 
 
 class TransTool:
@@ -8,101 +9,111 @@ class TransTool:
     __tlang = 22
 
     def __init__(self):
-      
+
         self.BASE_DIR = os.path.dirname(__file__)
         if (f := "Dict.json") not in os.listdir(self.BASE_DIR):
             with open(f, "w", encoding=self.encod_to) as fb:
                 obj = {self.__plang: {}}
                 json.dump(obj, fb)
 
-    def take(self, text, form = 'title'):
+    def take(self, text, form="title"):
         """take the text that will be translated
         \n params text : str -> input text
         \n params form : str -> the form of text returned " UPPER, lower, Title"
-        \n return : str -> translated texte if successful
-        \n return : str -> same input text if faild
+        \n return : str -> translated text if successful
+        \n return : str -> same input text if failed
         """
         text = text.lower()
         text_ = self.__retrieve(self.__tlang, self.__store(self.__plang, text))
         if form.lower() == "upper":
             text_ = text_.upper()
-        elif form.lower() == "lower" :
+        elif form.lower() == "lower":
             text_ = text_.lower()
         else:
             text_ = text_.title()
         return text_
 
-    def __translate(self):
-        src = self.ShowSupportedLang()[self.__plang][1]
-        dict_: dict = self.ShowDict(langs_only=False)
-        dest_list = [(i,self.ShowSupportedLang()[int(i)][1]) for i in dict_.keys() ]
+    def __translate(self, __all=False):
+        src = self.show_supported_lang()[self.__plang][1]
+        dict_: dict = self.show_dict(langs_only=False)
+        dist_list = [
+            (i, self.show_supported_lang()[int(i)][1])
+            for i in dict_.keys()
+            if int(i) != self.__plang
+        ]
         plang_items = dict_[str(self.__plang)].items()
-        for id, text in plang_items:
-            for lang_id, dest in dest_list:
-                if id not in dict_[lang_id].keys():
-                    # Todo Translation part will be here
-                    dict_[lang_id][id] = f'translated({text})'
-        with open(os.path.join(self.BASE_DIR, 'Dict.json'), 'w', encoding=self.encod_to) as f:
+        for __id, text in plang_items:
+            for lang_id, des in dist_list:
+                if __all:
+                    dict_[lang_id][__id] = translate(text, des, src)
+                else:
+                    if __id not in dict_[lang_id].keys():
+                        dict_[lang_id][__id] = translate(text, des, src)
+
+        with open(
+            os.path.join(self.BASE_DIR, "Dict.json"), "w", encoding=self.encod_to
+        ) as f:
             json.dump(dict_, f)
 
-
     def __store(self, lang_idx, text):
-        dict_: dict = self.ShowDict(langs_only=False)
+        dict_: dict = self.show_dict(langs_only=False)
         lang_idx = str(lang_idx)
-        try: 
+        try:
             text_list = dict_[lang_idx].values()
             idx_list = [int(x) for x in dict_[lang_idx].keys()]
             text_id = max(idx_list) + 1
-            if text not in text_list :
+            if text not in text_list:
                 dict_[lang_idx][str(text_id)] = text
             else:
-                return  idx_list[text_list.index(text)]
+                return idx_list[text_list.index(text)]
 
-        except :
-            text_id = '0'
+        except: # NOQA
+            text_id = "0"
             dict_[lang_idx][text_id] = text
-        with open(os.path.join(self.BASE_DIR, 'Dict.json'), 'w', encoding=self.encod_to) as f:
+        with open(
+            os.path.join(self.BASE_DIR, "Dict.json"), "w", encoding=self.encod_to
+        ) as f:
             json.dump(dict_, f)
         self.__translate()
         return text_id
-    
+
     def __retrieve(self, lang_idx, text_id):
-        dict_: dict = self.ShowDict(langs_only=False)
+        dict_: dict = self.show_dict(langs_only=False)
         try:
             return dict_[str(lang_idx)][str(text_id)]
-        except:
+        except: # NOQA
             return dict_[str(self.__plang)][str(text_id)]
 
-    def Update(self):
-        self.__translate()
+    def update(self):
+        self.__translate(__all=True)
 
-    def SetPrimaryLang(self, lang):
+    def set_primary_lang(self, lang):
         """Set the language to translate from
         \n  default is English
         \n  params : int -> index of the language
         \n  params : str -> name or code of the language
         \n  return language index if successful else None
         """
-        plang = None
+        plang = None # NOQA
         try:
             lang = int(lang)
-        except:
+        except: # NOQA
             pass
         if isinstance(lang, int):
-            if lang in self.ShowSupportedLang().keys():
-                self.__plang = plang = lang
+            if lang in self.show_supported_lang().keys():
+                self.__plang = plang = lang # NOQA
         elif isinstance(lang, str):
             lang = lang.lower()
             for idx, lng in zip(
-                self.ShowSupportedLang().keys(), self.ShowSupportedLang().values()
+                self.show_supported_lang().keys(), self.show_supported_lang().values()
             ):
                 if lang in lng:
-                    plang = self.SetPrimaryLang(idx)
+                    plang = self.set_primary_lang(idx)
                     break
 
         return plang
 
-    def SetTransToLang(self, lang):
+    def set_trans_to_lang(self, lang):
         """Set the language to translate to
         \n default is English
         \n params : int -> index of the language
@@ -112,28 +123,31 @@ class TransTool:
         tlang = None
         try:
             lang = int(lang)
-        except:
+        except: # NOQA
             pass
         if isinstance(lang, int):
-            if str(lang) not in self.ShowDict(langs_only=False).keys():
-                InvalidLanguegeError = ValueError(f"You Have To Call AddLanguages({lang}) First")
+            if str(lang) not in self.show_dict(langs_only=False).keys():
+                InvalidLanguegeError = ValueError(                  # NOQA
+                    f"You Have To Call AddLanguages({lang}) First"
+                )
                 raise InvalidLanguegeError
-            if lang in self.ShowSupportedLang().keys():
+            if lang in self.show_supported_lang().keys():
                 self.__tlang = tlang = lang
         elif isinstance(lang, str):
             lang = lang.lower()
             for idx, lng in zip(
-                self.ShowSupportedLang().keys(), self.ShowSupportedLang().values()
+                self.show_supported_lang().keys(), self.show_supported_lang().values()
             ):
                 if lang in lng:
-                    tlang = self.SetTransToLang(idx)
+                    tlang = self.set_trans_to_lang(idx)
                     break
 
         return tlang
 
-    def ShowSupportedLang(self):
+    @staticmethod
+    def show_supported_lang():
         """To Show The Supported Languages And it's Indexes"""
-        LANGUAGES = {
+        LANGUAGES = {   # NOQA
             1: ["afrikaans", "af"],
             2: ["albanian", "sq"],
             3: ["amharic", "am"],
@@ -245,37 +259,37 @@ class TransTool:
 
         return LANGUAGES
 
-    def ShowDict(self, langs_only=True):
+    def show_dict(self, langs_only=True):
         """To Show The Languages Added To Dict Or Full Dict Data"""
         with open("Dict.json", "r", encoding=self.encod_to) as f:
-            lngs = json.load(f)
+            longs = json.load(f)
             if not langs_only:
-                return lngs
+                return longs
             else:
-                id = map(int, lngs.keys())
-                return [self.ShowSupportedLang()[ln] for ln in id]
+                __id = map(int, longs.keys())
+                return [self.show_supported_lang()[ln] for ln in __id]
 
-    def AddLanguages(self, *args, force=False):
-        """You Have To Show Supported Languages To See Languges indexes First
+    def add_languages(self, *args, force=False):
+        """You Have To Show Supported Languages To See Languages indexes First
         By Calling ShowSupportedLang() Method
         \n force : bool -> True to ignore index errors (False by default)
-        \n args :int -> indexs of languages to add
+        \n args :int -> index of languages to add
         \n return True if successful else False
         """
         f = open("Dict.json", "r", encoding=self.encod_to)
         langs_dict = json.load(f)
         f.close()
-        lngs_id = [i for i in map(int, langs_dict.keys())]
+        longs_id = [i for i in map(int, langs_dict.keys())]
         err = False
         to_add = []
         for i in args:
             try:
                 i = int(i)
-            except:
+            except: # NOQA
                 pass
-            if i not in self.ShowSupportedLang().keys():
+            if i not in self.show_supported_lang().keys():
                 err = True
-            elif i not in lngs_id:
+            elif i not in longs_id:
                 to_add.append(i)
             else:
                 continue
@@ -287,44 +301,48 @@ class TransTool:
             json.dump(langs_dict, open("Dict.json", "w", encoding=self.encod_to))
             return True
 
-    def DropLang(self, lang):
-        """To Drop Language From Dictionery
+    def drop_lang(self, lang):
+        """To Drop Language From Dictionary
         \n params : int -> index of language to drop
         \n params : str -> name or code of language to drop
         \n return True if successful else False
         """
         with open("Dict.json", "r", encoding=self.encod_to) as f:
             langs_dict: dict = json.load(f)
-        droped = False
+        dropped = False
         try:
             lang = int(lang)
-        except:
+        except: # NOQA
             pass
 
         if isinstance(lang, int):
             if lang in list(map(int, langs_dict.keys())):
                 del langs_dict[str(lang)]
                 json.dump(langs_dict, open("Dict.json", "w", encoding=self.encod_to))
-                droped = True
+                dropped = True
 
         elif isinstance(lang, str):
             lang = lang.lower()
             for idx, lng in zip(
-                self.ShowSupportedLang().keys(), self.ShowSupportedLang().values()
+                self.show_supported_lang().keys(), self.show_supported_lang().values()
             ):
                 if lang in lng:
-                    droped = self.DropLang(idx)
+                    dropped = self.drop_lang(idx)
                     break
 
-        return droped
+        return dropped
 
-    def GetPrimaryLang(self):
+    def get_primary_lang(self):
         """Return The Primary Language"""
 
-        return {self.__plang: self.ShowSupportedLang()[self.__plang]}
+        return {self.__plang: self.show_supported_lang()[self.__plang]}
 
-    def GetTransToLang(self):
+    def get_trans_to_lang(self):
         """Return The Primary Language"""
 
-        return {self.__tlang: self.ShowSupportedLang()[self.__tlang]}
+        return {self.__tlang: self.show_supported_lang()[self.__tlang]}
 
+
+a = TransTool()
+a.encod_to = "cp1256"
+a.update()
