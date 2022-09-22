@@ -13,6 +13,7 @@ test*
 
 # Distribution / packaging
 .Python
+test*
 build/
 develop-eggs/
 dist/
